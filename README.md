@@ -136,4 +136,87 @@ When it finishes, open `.opencode/features/<feature>/mock/index.html`.
 
 ## Using `copy.md`
 
-Each screen is a tree in vis
+Each screen is a tree in visual order: section, then component, then element, then variant (state or error case). Columns:
+
+| Column | Content |
+|---|---|
+| Element | Numbered path in the tree, for example `1.4.3.5.2 Wrong length` |
+| Prod text | Exact English text as rendered today |
+| Redesign text | Empty; for the designer to fill in |
+| Key | Transifex key (`chronogolf-web`, source `config/locales/en.yml`), or `-` for hardcoded, browser or external texts |
+| Source | File and line that decide when the text is shown |
+| Comment | When it appears if not by default, what it depends on, variable values, defect IDs |
+
+Placeholders in Prod text:
+- `(server message)` — text comes from the server at runtime;
+- `(browser message)` — the browser's native validation text;
+- `(external message)` — text from a third-party service.
+
+Keys referenced by the feature but not shown on the researched screens are listed under **Excluded keys** with a reason.
+
+## Continuing or repeating research
+
+- **Continue:** ask the agent to continue the feature. It reads `HANDOFF.md` and does not re-research confirmed facts.
+- **Clean re-run:** ask for a new folder and a clean re-run. The old folder is read only after the new pass is finished.
+- **Rebuild the CSS** when the lockfile changes or the screen uses new Angular components. The agent re-runs `build-app-css.mjs`.
+
+## Sharing results
+
+`.opencode/features/` is git-ignored in the product repository. To share a feature:
+- Archive `.opencode/features/<feature>/` and `.opencode/features/_app-css/<app>/`.
+- The recipient extracts both into `.opencode/features/` of their own clone of the product repository.
+- `node_modules` inside `_app-css/` is not needed for viewing and can be left out of the archive.
+
+## Limitations
+
+- Frontend only. Backend code is read only to explain errors, validations and texts the frontend shows.
+- The mock is static. Data is fictional; requests are simulated, and outcomes (success, slow, each error) are picked in the widget.
+- Visual verification needs a browser tool for the agent. In some corporate setups system Chrome headless is blocked; use Playwright's headless shell or check manually.
+- A saved production page (`.mhtml`) is not a pixel reference:
+  - it does not include web or icon fonts;
+  - it may be captured during loading, so buttons look disabled;
+  - re-parsing moves nested paragraphs.
+
+  Compare structure and computed styles, not screenshots alone.
+
+## Troubleshooting
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `E401` although `~/.npmrc` has a token | `frontend/.npmrc` uses `${GITHUB_PACKAGE_TOKEN}`, which is empty when not exported | The build script handles this itself. For manual npm commands in `frontend/`, export the variable for that command only |
+| `E401` / `E403` with no token configured | No GitHub Packages access | Create a classic token with `read:packages`, authorize SSO for `lightspeed`, set it in `~/.npmrc` |
+| `E404` on `@shopkeep/*` | Private packages | Not needed for research; ignore |
+| Build report shows `unresolved > 0` | A CSS import or asset path was not found | Report it; the fix belongs in `assets/build-app-css.mjs`, not in the mock |
+| Images or icons missing in the mock | Feature folder is not inside a clone of the product repository | Move it to `<product-repo>/.opencode/features/` |
+| Widget does not appear | Script order or a JavaScript error | Open the browser console; scripts must load in the order given in `references/mock-runtime.md` |
+| Agent loads an old version of the skill | Two skills share the name `design-research` | Remove or rename the old one |
+
+## Repository layout
+
+```text
+SKILL.md                       # instructions for the agent
+references/
+  copy-sources.md              # where texts come from and the copy.md format
+  mock-runtime.md              # scenarios.js format, widget context rules, page behaviors, comments
+  npm-access.md                # npm token checks and failure handling
+  domain-model.md              # extra analysis for domain-heavy features
+assets/
+  build-app-css.mjs            # compiles the application CSS (run, do not edit per feature)
+  research-launcher.js         # floating widget (copied into each mock as is)
+  mock-behaviors.js            # declarative page behaviors (copied into each mock as is)
+```
+
+## Contributing
+
+- Keep `SKILL.md` for agent instructions and this README for people.
+- Fix shared problems once in `assets/` or `references/`, never with per-feature workarounds.
+- Before changing `research-launcher.js` or `mock-behaviors.js`, test a mock without sections or pages and a mock with them.
+- Describe every change in the changelog. Note anything that affects existing mocks, for example `scenarios.js` fields or runtime behavior.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) or the repository releases: <link>.
+
+## Support
+
+Questions and issues: <channel or issue tracker>. Include the feature name, its `HANDOFF.md`, and the output of `build-app-css.mjs` if the problem is the build.
