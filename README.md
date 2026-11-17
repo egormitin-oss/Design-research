@@ -39,7 +39,7 @@ To run the skill, you need:
 | Requirement | Details |
 |---|---|
 | [OpenCode](https://opencode.ai) | Any recent version |
-| A clone of the product repository | Run the skill inside `chronogolf-master` |
+| A clone of the product repository | Run the skill inside local repo, for example `chronogolf-master` |
 | Node.js and npm | Tested with Node 16.13.0 |
 | GitHub Packages token | A classic token with `read:packages`, authorised for SSO in the `lightspeed` org. It’s needed to install `@lightspeed/design-system-css`, which the application styles import |
 
